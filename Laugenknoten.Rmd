@@ -1,0 +1,68 @@
+---
+title: "Laugenknoten Index"
+author: "rgratz"
+date: "2020-02-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  warning = FALSE,
+  message = FALSE
+)
+
+library(tidyverse)
+library(ggplot2)
+```
+
+```{r, include=FALSE}
+laugenknoten_data <- read_csv("Laugendata.csv")
+laugenknoten_data <- laugenknoten_data %>% 
+  mutate(
+    ID = row_number(),
+    Weekday = lubridate::wday(laugenknoten_data$Date, label=T),
+    Time = as.character(Time),
+    Timeframe = case_when(
+      Time <= "12:00"  ~ "< 12:00",
+      Time > "12:00" && Time <= "14:30"  ~ "12:00 - 14:30",
+      Time > "14:30"  ~ "> 14:30",
+    )
+  ) %>% 
+  select(ID,Date,Weekday,Time,Timeframe,Amount,Mensa)
+
+laugenknoten_data
+```
+
+```{r, include=FALSE}
+laugenknoten_data <- laugenknoten_data %>% 
+  group_by(
+    Mensa,
+    Weekday,
+    Timeframe
+  ) %>% 
+  summarise(
+    average = mean(Amount)
+  ) %>% 
+  arrange(desc(Mensa))
+
+laugenknoten_data
+```
+
+```{r, echo=FALSE}
+laugenknoten_data %>% 
+  ggplot(
+    aes(
+      x = Weekday,
+      y = average
+    )
+  ) +
+  geom_col() + 
+  labs(
+    title = "Laugenknoten nach Wochentagen",
+    x = "Wochentag",
+    y = "Durchschnitt"
+  ) + 
+  facet_grid(Mensa ~ Timeframe)
+```
+
+
