@@ -1,8 +1,10 @@
 ---
 title: "Laugenknoten Index"
 author: "rgratz"
-date: "2020-02-10"
-output: html_document
+date: '2020-02-10'
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -16,20 +18,22 @@ library(ggplot2)
 ```
 
 ```{r, include=FALSE}
-laugenknoten_data <- read_csv("Laugendata.csv")
+# laugenknoten_data <- read_csv("Laugendata.csv")
+laugenknoten_data <- read_csv(url("https://raw.githubusercontent.com/GratzR/laugen_index/master/Laugendata.csv"))
+
 laugenknoten_data <- laugenknoten_data %>% 
   mutate(
     ID = row_number(),
     Weekday = lubridate::wday(laugenknoten_data$Date, label=T),
-    Time = as.character(Time),
+    Time = as.POSIXct(Time),
     Timeframe = case_when(
-      Time <= "12:00"  ~ "< 12:00",
-      Time > "12:00" && Time <= "14:30"  ~ "12:00 - 14:30",
-      Time > "14:30"  ~ "> 14:30",
+      lubridate::hour(Time) >= 14  ~ "14:00 - Ende",
+      lubridate::hour(Time) >= 12  ~ "12:00 - 14:00",
+      lubridate::hour(Time) >= 10  ~ "10:00 - 12:00",
+      lubridate::hour(Time) <= 9  ~ "< 10:00"
     )
   ) %>% 
   select(ID,Date,Weekday,Time,Timeframe,Amount,Mensa)
-
 laugenknoten_data
 ```
 
@@ -43,7 +47,7 @@ laugenknoten_data <- laugenknoten_data %>%
   summarise(
     average = mean(Amount)
   ) %>% 
-  arrange(desc(Mensa))
+  arrange(Timeframe)
 
 laugenknoten_data
 ```
